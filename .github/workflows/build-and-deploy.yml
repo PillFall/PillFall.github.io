@@ -1,0 +1,45 @@
+name: "Build and deploy the SPA"
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup node environment
+        uses: actions/setup-node@v3
+        with:
+          cache: "yarn"
+      - name: Install dependencies
+        run: yarn install --no-progress --non-interactive --pure-lockfile
+      - name: Compile the SPA
+        run: yarn build
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Retrieve production artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+      - name: Initializes an empty repository
+        run: git init
+      - run: echo "pillfall.me" > CNAME
+      - uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          coauthor_email: jebuitragoc@unal.edu.co
+          coauthor_name: Joar Esteban Buitrago Carrillo
+          message: 🚀 Deploy PillFall page
+          branch: gh-pages
+          force: true
